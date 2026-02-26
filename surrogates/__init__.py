@@ -1,1 +1,1 @@
-from common_utils import utils
+from .common_utils import utils

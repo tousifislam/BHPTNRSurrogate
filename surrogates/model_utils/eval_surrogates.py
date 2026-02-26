@@ -4,8 +4,8 @@
 ## Author : Tousif Islam, Nov 2022 [tislam@umassd.edu / tousifislam24@gmail.com]
 ##==============================================================================
 
-from common_utils import utils, fits
-import common_utils.check_inputs as checks
+from ..common_utils import utils, fits
+from ..common_utils import check_inputs as checks
 
 #----------------------------------------------------------------------------------------------------
 def evaluate_surrogate(X_sur, X_calib, X_bounds, time, modes, modes_available, alpha_coeffs,\

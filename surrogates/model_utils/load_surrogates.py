@@ -10,9 +10,9 @@ import h5py
 import os
 from os import path
 import hashlib
-from common_utils import load_splines as load_spl
-from common_utils import load_GPRs as load_gpr
-from common_utils import filehash
+from ..common_utils import load_splines as load_spl
+from ..common_utils import load_GPRs as load_gpr
+from ..common_utils import filehash
 
 """
 A collection of functions that loads the surrogate fit data from their respective h5 file
