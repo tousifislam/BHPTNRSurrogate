@@ -16,9 +16,14 @@ dependencies = [
 
 [project.optional-dependencies]
 gpr = ["scikit-learn"]
+test = ["pytest>=7.0"]
 
 [tool.setuptools.packages]
 find = {where = [".."], include = ["BHPTNRSurrogate*"]}
 
 [tool.setuptools.package-data]
 "*" = ["*.h5"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: requires h5 data download (deselect with '-m \"not slow\"')"]
