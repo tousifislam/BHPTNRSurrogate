@@ -123,9 +123,10 @@ def generate_negative_m_mode(h_dict):
 
 
 #----------------------------------------------------------------------------------------------------
-def obtain_processed_output(X_calib, time, hsur_raw_dict, alpha_coeffs, beta_coeffs, 
-                            alpha_beta_functional_form, calibrated, M_tot, dist_mpc, 
-                            orb_phase, inclination, mode_sum, neg_modes, lmax, CoorbToInert=False):
+def obtain_processed_output(X_calib, time, hsur_raw_dict, alpha_coeffs, beta_coeffs,
+                            alpha_beta_functional_form, calibrated, M_tot, dist_mpc,
+                            orb_phase, inclination, mode_sum, neg_modes, lmax, CoorbToInert=False,
+                            mass_factor=1.0):
     """
     Function to process the output of raw surrogate to apply :
     (i) NR calibration;
@@ -174,8 +175,8 @@ def obtain_processed_output(X_calib, time, hsur_raw_dict, alpha_coeffs, beta_coe
             warnings.warn('Only modes up to ell=5 are NR calibrated', stacklevel=2)
     # when no nr calibration is applied
     else:
-        t_sur=np.array(time)
-        hsur_dict = hsur_raw_dict
+        t_sur = np.array(time) * mass_factor
+        hsur_dict = {mode: np.array(h) * mass_factor for mode, h in hsur_raw_dict.items()}
         warnings.warn('Modes are NOT NR calibrated - waveforms only have 0PA contribution', stacklevel=2)
 
     # get all the negative m modes from postive m modes using symmetry

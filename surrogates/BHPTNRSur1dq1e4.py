@@ -51,7 +51,7 @@ def __getattr__(name):
 @docs.copy_doc(docs.generic_doc_for_models,docs.BHPTNRSur1dq1e4_doc)
 def generate_surrogate(q, spin1=None, spin2=None, ecc=None, ano=None, modes=None, M_tot=None, \
                        dist_mpc=None, orb_phase=None, inclination=None, neg_modes=True, \
-                       mode_sum=False, lmax=5, calibrated=True):
+                       mode_sum=False, lmax=5, calibrated=True, mass_scale='M'):
 
     _ensure_loaded()
 
@@ -67,6 +67,22 @@ def generate_surrogate(q, spin1=None, spin2=None, ecc=None, ano=None, modes=None
             "Model only takes [q] as input. Ignoring extra params: %s" % ", ".join(sorted(ignored)),
             stacklevel=2,
         )
+
+    # validate mass_scale parameter
+    if mass_scale not in ('M', 'm1'):
+        raise ValueError("mass_scale must be 'M' or 'm1', got %r" % mass_scale)
+
+    if calibrated and mass_scale != 'M':
+        warnings.warn(
+            "mass_scale is ignored when calibrated=True (NR calibration already uses total mass M)",
+            stacklevel=2,
+        )
+
+    # compute mass_factor for uncalibrated waveforms
+    if not calibrated and mass_scale == 'M':
+        mass_factor = 1.0 / (1.0 + 1.0/q)
+    else:
+        mass_factor = 1.0
 
     # modes requested
     if modes==None:
@@ -109,6 +125,7 @@ def generate_surrogate(q, spin1=None, spin2=None, ecc=None, ano=None, modes=None
                                         _surrogate_data['fit_data_dict_2'],
                                         _surrogate_data['B_dict_1'], _surrogate_data['B_dict_2'],
                                         fit_func, decomposition_funcs,\
-                                        norm, mode_sum, neg_modes, lmax, CoorbToInert)
+                                        norm, mode_sum, neg_modes, lmax, CoorbToInert,
+                                        mass_factor=mass_factor)
 
     return t_surrogate, h_surrogate
