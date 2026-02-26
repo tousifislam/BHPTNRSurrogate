@@ -96,6 +96,14 @@ wget https://zenodo.org/records/13340319/BHPTNRSur2dq1e3.h5
 
 3. Simply move these files into the data directory `BHPTNRSurrogate/data/`.
 
+4. Install the package locally:
+
+```bash
+pip install -e .
+```
+
+Alternatively, if you skip steps 2-3, the h5 data files will be automatically downloaded from Zenodo the first time you call a model.
+
 # Examples
 
 Example tutorial notebooks for the **BHPTNRSur1dq1e4** and **BHPTNRSur2dq1e3** models are available here `BHPTNRSurrogate/tutorials`.
