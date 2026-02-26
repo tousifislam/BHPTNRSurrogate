@@ -4,6 +4,8 @@
 ## Author : Tousif Islam, Aug 2022 [tislam@umassd.edu / tousifislam24@gmail.com]
 ##==============================================================================
 
+import warnings
+
 import numpy as np
 from gwtools import gwtools as _gwtools
 from gwtools.harmonics import sYlm as _sYlm
@@ -169,12 +171,12 @@ def obtain_processed_output(X_calib, time, hsur_raw_dict, alpha_coeffs, beta_coe
         t_sur, hsur_dict = nrcalib.generate_calibrated_ppBHPT(X_calib, time, hsur_raw_dict, alpha_coeffs, 
                                                                   beta_coeffs, alpha_beta_functional_form)
         if lmax>5:
-            print('**** warning **** : only modes up to \ell=5 are NR calibrated')
+            warnings.warn('Only modes up to ell=5 are NR calibrated', stacklevel=2)
     # when no nr calibration is applied
     else:
         t_sur=np.array(time)
         hsur_dict = hsur_raw_dict
-        print('**** warning **** : modes are NOT NR calibrated - waveforms only have 0PA contribution')
+        warnings.warn('Modes are NOT NR calibrated - waveforms only have 0PA contribution', stacklevel=2)
 
     # get all the negative m modes from postive m modes using symmetry
     if neg_modes:

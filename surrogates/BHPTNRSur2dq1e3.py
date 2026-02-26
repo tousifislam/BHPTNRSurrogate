@@ -9,7 +9,6 @@ import warnings
 
 import numpy as np
 import os
-from os import path
 
 from .model_utils import load_surrogates as load
 from .model_utils import eval_surrogates as eval_sur
