@@ -4,6 +4,8 @@
 ## Author : Tousif Islam, Aug 2022 [tislam@umassd.edu / tousifislam24@gmail.com]
 ##==============================================================================
 
+import warnings
+
 import numpy as np
 import os
 from os import path
@@ -60,14 +62,12 @@ def generate_surrogate(q, spin1=None, spin2=None, ecc=None, ano=None, modes=None
                (9,9),(10,8),(10,9)]
 
     # Warning to user if inputs include spin or eccentricity
-    if spin1 is not None:
-        print("**** warning **** : Model only takes [q] as input. Ignoring extra params.")
-    if spin2 is not None:
-        print("**** warning **** : Model only takes [q] as input. Ignoring extra params.")
-    if ecc is not None:
-        print("**** warning **** : Model only takes [q] as input. Ignoring extra params.")
-    if ano is not None:
-        print("**** warning **** : Model only takes [q] as input. Ignoring extra params.")
+    ignored = {k for k, v in [("spin1", spin1), ("spin2", spin2), ("ecc", ecc), ("ano", ano)] if v is not None}
+    if ignored:
+        warnings.warn(
+            "Model only takes [q] as input. Ignoring extra params: %s" % ", ".join(sorted(ignored)),
+            stacklevel=2,
+        )
 
     # modes requested
     if modes==None:

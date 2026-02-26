@@ -5,6 +5,8 @@
 ## Modified : Tousif Islam, Jul 2023
 ##==============================================================================
 
+import warnings
+
 import numpy as np
 import os
 from os import path
@@ -60,12 +62,12 @@ def generate_surrogate(q, spin1=0.0, spin2=None, ecc=None, ano=None, modes=None,
         modes = modes_available
 
     # Warning to user if inputs include secondary spin or eccentricity
-    if spin2 is not None:
-        print("**** warning **** : Model only takes [q,spin1] as input. Ignoring extra params.")
-    if ecc is not None:
-        print("**** warning **** : Model only takes [q,spin1] as input. Ignoring extra params.")
-    if ano is not None:
-        print("**** warning **** : Model only takes [q,spin1] as input. Ignoring extra params.")
+    ignored = {k for k, v in [("spin2", spin2), ("ecc", ecc), ("ano", ano)] if v is not None}
+    if ignored:
+        warnings.warn(
+            "Model only takes [q, spin1] as input. Ignoring extra params: %s" % ", ".join(sorted(ignored)),
+            stacklevel=2,
+        )
 
     # this model provide fits for the positive spin and negative spin cases differently
     # choose appropriate fit params here depending on the input spin value
