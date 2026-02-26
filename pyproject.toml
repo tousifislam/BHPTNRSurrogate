@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=64"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "BHPTNRSurrogate"
@@ -17,8 +17,8 @@ dependencies = [
 [project.optional-dependencies]
 gpr = ["scikit-learn"]
 
-[tool.setuptools.packages.find]
-include = ["surrogates*"]
+[tool.setuptools.packages]
+find = {where = [".."], include = ["BHPTNRSurrogate*"]}
 
-[tool.setuptools]
-package-dir = {"BHPTNRSurrogate" = "."}
+[tool.setuptools.package-data]
+"*" = ["*.h5"]
