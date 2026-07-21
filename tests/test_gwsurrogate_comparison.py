@@ -1,9 +1,13 @@
-"""Regression test: BHPTNRSur1dq1e4 agreement between BHPTNRSurrogate and gwsurrogate.
+"""Regression test: BHPTNRSur1dq1e4 waveforms against stored reference data.
 
-Based on tutorials/testing_for_pr_no9.ipynb — both packages evaluate the same
-underlying spline fits, so the waveforms should agree to machine precision.
+Reference data was generated from gwsurrogate (verified to agree with
+BHPTNRSurrogate to machine precision in tutorials/testing_for_pr_no9.ipynb)
+and stored at 500 evenly-spaced time samples per waveform.
+
+This test ensures that code changes do not alter waveform output.
 """
 
+import os
 import warnings
 
 import numpy as np
@@ -13,9 +17,7 @@ from scipy.interpolate import interp1d
 
 pytestmark = pytest.mark.gwsurrogate
 
-
-gwsurrogate = pytest.importorskip("gwsurrogate")
-
+REFERENCE_FILE = os.path.join(os.path.dirname(__file__), "regression_data_1dq1e4.npz")
 
 MODES_TEST = [
     (2, 2), (2, 1), (3, 1), (3, 2), (3, 3),
@@ -35,88 +37,48 @@ def sur_bhpt():
 
 
 @pytest.fixture(scope="module")
-def sur_gw():
-    """Load BHPTNRSur1dq1e4 via gwsurrogate."""
-    import os
-    gwsur_dir = os.path.join(os.path.dirname(gwsurrogate.__file__), "surrogate_downloads")
-    gwsur_path = os.path.join(gwsur_dir, "BHPTNRSur1dq1e4.h5")
-    if not os.path.exists(gwsur_path):
-        gwsur_path = gwsurrogate.catalog.pull("BHPTNRSur1dq1e4")
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        sur = gwsurrogate.EvaluateSurrogate(gwsur_path)
-    return sur
-
-
-def _gwsur_to_dict(modes_gw, hp_gw, hc_gw):
-    """Convert gwsurrogate output arrays to a mode dict using hp - 1j*hc convention."""
-    h = {}
-    for i, mode in enumerate(modes_gw):
-        hp_m = hp_gw[:, i] if hp_gw.ndim > 1 else hp_gw
-        hc_m = hc_gw[:, i] if hc_gw.ndim > 1 else hc_gw
-        h[tuple(mode)] = hp_m - 1j * hc_m
-    return h
-
-
-def _compare_on_common_grid(t_bhpt, h_bhpt, t_gw, h_gw, modes):
-    """Interpolate onto a common time grid and return max differences per mode."""
-    t_lo = max(t_bhpt[0], t_gw[0])
-    t_hi = min(t_bhpt[-1], t_gw[-1])
-
-    if len(t_bhpt) == len(t_gw) and np.allclose(t_bhpt, t_gw, atol=1e-10):
-        tc = t_bhpt
-        h1 = h_bhpt
-        h2 = h_gw
-    else:
-        mask = (t_bhpt >= t_lo) & (t_bhpt <= t_hi)
-        tc = t_bhpt[mask]
-        h1 = {m: h_bhpt[m][mask] for m in modes}
-        h2 = {}
-        for m in modes:
-            h2[m] = (
-                interp1d(t_gw, h_gw[m].real, "cubic")(tc)
-                + 1j * interp1d(t_gw, h_gw[m].imag, "cubic")(tc)
-            )
-
-    results = {}
-    for mode in modes:
-        h1m, h2m = h1[mode], h2[mode]
-        max_dh = np.max(np.abs(h1m - h2m))
-        a1, a2 = np.abs(h1m), np.abs(h2m)
-        thr = 1e-8 * max(np.max(a1), np.max(a2))
-        valid = (a1 > thr) & (a2 > thr)
-        if np.any(valid):
-            max_dphi = np.max(np.abs(
-                np.unwrap(np.angle(h1m[valid])) - np.unwrap(np.angle(h2m[valid]))
-            ))
-        else:
-            max_dphi = 0.0
-        results[mode] = {"max_dh": max_dh, "max_dphi": max_dphi}
-    return results
+def reference_data():
+    """Load stored reference waveforms."""
+    if not os.path.exists(REFERENCE_FILE):
+        pytest.skip("Reference data file not found: %s" % REFERENCE_FILE)
+    return dict(np.load(REFERENCE_FILE))
 
 
 @pytest.mark.parametrize("q", [3, 10, 100])
-def test_bhpt_vs_gwsurrogate(sur_bhpt, sur_gw, q):
-    """Waveforms from BHPTNRSurrogate and gwsurrogate should agree to machine precision."""
+def test_regression_against_reference(sur_bhpt, reference_data, q):
+    """BHPTNRSur1dq1e4 output must match stored reference data."""
+    t_ref = reference_data["t_q%d" % q]
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         t_bhpt, h_bhpt = sur_bhpt.generate_surrogate(
             q=q, modes=MODES_TEST, neg_modes=False,
         )
-        modes_gw, t_gw, hp_gw, hc_gw = sur_gw(
-            q, mode_sum=False, fake_neg_modes=False,
+
+    for mode in MODES_TEST:
+        ref_key = "h_q%d_l%d_m%d" % (q, mode[0], mode[1])
+        h_ref = reference_data[ref_key]
+
+        h_interp = (
+            interp1d(t_bhpt, h_bhpt[mode].real, "cubic")(t_ref)
+            + 1j * interp1d(t_bhpt, h_bhpt[mode].imag, "cubic")(t_ref)
         )
 
-    h_gw = _gwsur_to_dict(modes_gw, hp_gw, hc_gw)
-    common = sorted(set(h_bhpt.keys()) & set(h_gw.keys()))
-    assert len(common) > 0, "No common modes between the two packages"
-
-    diffs = _compare_on_common_grid(t_bhpt, h_bhpt, t_gw, h_gw, common)
-
-    for mode, d in diffs.items():
-        assert d["max_dh"] < ATOL_STRAIN, (
-            f"q={q} mode={mode}: max|dh| = {d['max_dh']:.4e} exceeds {ATOL_STRAIN}"
+        max_dh = np.max(np.abs(h_interp - h_ref))
+        assert max_dh < ATOL_STRAIN, (
+            "q=%d mode=%s: max|dh| = %.4e exceeds %s" % (q, mode, max_dh, ATOL_STRAIN)
         )
-        assert d["max_dphi"] < ATOL_PHASE, (
-            f"q={q} mode={mode}: max|dphi| = {d['max_dphi']:.4e} exceeds {ATOL_PHASE}"
-        )
+
+        a_ref = np.abs(h_ref)
+        a_new = np.abs(h_interp)
+        thr = 1e-8 * max(np.max(a_ref), np.max(a_new))
+        valid = (a_ref > thr) & (a_new > thr)
+        if np.any(valid):
+            max_dphi = np.max(np.abs(
+                np.unwrap(np.angle(h_interp[valid]))
+                - np.unwrap(np.angle(h_ref[valid]))
+            ))
+            assert max_dphi < ATOL_PHASE, (
+                "q=%d mode=%s: max|dphi| = %.4e exceeds %s"
+                % (q, mode, max_dphi, ATOL_PHASE)
+            )
