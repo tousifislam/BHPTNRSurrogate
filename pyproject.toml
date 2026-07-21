@@ -26,4 +26,7 @@ find = {where = [".."], include = ["BHPTNRSurrogate*"]}
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["slow: requires h5 data download (deselect with '-m \"not slow\"')"]
+markers = [
+    "slow: requires h5 data download (deselect with '-m \"not slow\"')",
+    "gwsurrogate: requires gwsurrogate package and h5 data (deselect with '-m \"not gwsurrogate\"')",
+]
