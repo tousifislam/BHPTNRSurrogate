@@ -86,7 +86,7 @@ jobs:
 
       - name: Locate gwsurrogate download dir
         id: gwsur-dir
-        run: echo "path=$(python -c 'import os, gwsurrogate; print(os.path.join(os.path.dirname(gwsurrogate.__file__), "surrogate_downloads"))')" >> "$GITHUB_OUTPUT"
+        run: python -c 'import os, gwsurrogate; print("path=" + os.path.join(os.path.dirname(gwsurrogate.__file__), "surrogate_downloads"))' >> "$GITHUB_OUTPUT"
 
       - name: Cache h5 data
         uses: actions/cache@v4
