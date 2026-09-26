@@ -85,16 +85,17 @@ def generic_doc_for_models() -> None:
 
     mass_scale:  Mass convention for the waveform output. Options: 'M' or 'm1'.
                  Default: 'M' (total mass).
-                 When calibrated=True, this is ignored (NR calibration already uses
-                 total mass M).
+                 Calibrated waveforms already use total mass M, so passing
+                 mass_scale='m1' with calibrated=True raises a ValueError.
                  When calibrated=False and mass_scale='M', the raw ppBHPT waveform
                  (which uses m1 as the mass scale) is rescaled to total mass M by
                  applying a factor of q/(q+1) to both time and strain.
                  When calibrated=False and mass_scale='m1', the raw ppBHPT waveform
                  is returned without any rescaling. This reproduces the default
                  behavior from versions before 0.2.0.
-                 Physical waveforms requested with M_tot and dist_mpc require
-                 mass_scale='M'.
+                 In summary, mass_scale='m1' is only available for uncalibrated
+                 geometric waveforms. Physical waveforms requested with M_tot and
+                 dist_mpc require mass_scale='M'.
 
     Output
     ======
